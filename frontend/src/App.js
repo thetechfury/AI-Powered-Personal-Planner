@@ -1,25 +1,16 @@
-import logo from './logo.svg';
 import './App.css';
+import Navbar from "./components/navbar/Navbar";
+import Search from "./components/ui/Search";
+import Calendar from "./components/ui/calendar";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <div className="flex flex-col h-screen bg-gray-900 text-gray-100">
+            <Navbar/>
+            <Search/>
+            <Calendar/>
+        </div>
+    );
 }
 
 export default App;
