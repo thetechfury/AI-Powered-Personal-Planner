@@ -2,22 +2,23 @@ import uuid
 
 from django.http import JsonResponse
 from rest_framework import viewsets
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
 
 from event.models import CustomUser, Task, Category
 from event.serializers import CustomUserSerializer, TaskSerializer, CategorySerializer
 
 
-class CustomUserViewSet(viewsets.ModelViewSet):
+class CustomUserViewSet(GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
-    def create_or_get_user(self, request):
+    def get(self, request):
         session_id = request.COOKIES.get('session_id')
 
         if session_id:
-            try:
-                user = CustomUser.objects.get(session_id=session_id)
-            except CustomUser.DoesNotExist:
+            user = CustomUser.objects.filter(session_id=session_id).first()
+            if not user:
                 user = self.create_user()
                 session_id = user.session_id
         else:
@@ -25,8 +26,8 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             session_id = user.session_id
 
         serializer = CustomUserSerializer(user)
-        response_data = serializer.data
-        response = JsonResponse(response_data)
+
+        response = Response(serializer.data)
         response.set_cookie('session_id', session_id, httponly=True)
         return response
 
