@@ -1,10 +1,9 @@
 import * as React from 'react';
-import {useState} from 'react';
+import { useState } from 'react';
 import dayjs from 'dayjs';
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
-import {DateCalendar} from '@mui/x-date-pickers/DateCalendar';
-
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 export default function Calendar() {
     const [value, setValue] = useState(dayjs());
     const DateHandler = (newValue) => {
@@ -18,7 +17,7 @@ export default function Calendar() {
                     <DateCalendar
                         value={value}
                         onChange={DateHandler}
-                        slotProps={{calendarHeader: {sx: {color: '#22d3ee', width: '100%'}}}}
+                        slotProps={{ calendarHeader: { sx: { color: '#22d3ee', width: '100%' } }}}
                     />
                 </LocalizationProvider>
             </div>
