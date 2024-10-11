@@ -1,8 +1,8 @@
 from django.urls import path, include
 
-from event.urls import router
+import event
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('api/', include('event.urls')),
     path('api-auth/', include('rest_framework.urls')),
 ]

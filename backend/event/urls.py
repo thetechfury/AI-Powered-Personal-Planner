@@ -1,9 +1,6 @@
-from rest_framework import routers
-
 from event import views
-from event.views import TaskViewSet, CategoryViewSet
+from django.urls import path
 
-router = routers.DefaultRouter()
-router.register('custom_user', views.CustomUserViewSet, basename='custom_user')
-router.register(r'tasks', TaskViewSet)
-router.register(r'categories', CategoryViewSet)
+urlpatterns = [
+    path('custom_user/', views.CustomUserViewSet.as_view(), name='custom_user'),
+]
