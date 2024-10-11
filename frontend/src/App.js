@@ -1,16 +1,15 @@
 import './App.css';
 import Navbar from "./components/navbar/Navbar";
-import Search from "./components/ui/Search";
-import Calendar from "./components/ui/calendar";
+import EventsPage from "./pages/EventsPage";
+import Footer from "./components/footer/Footer";
 
 function App() {
     return (
         <div className="flex flex-col h-screen bg-gray-900 text-gray-100">
             <Navbar/>
-            <Search/>
-            <Calendar/>
+            <EventsPage/>
+            <Footer/>
         </div>
     );
-}
-
+};
 export default App;
