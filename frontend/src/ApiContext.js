@@ -15,7 +15,6 @@ export const ApiProvider = ({ children }) => {
         const response = await fetch((`${BASE_URL}/custom_user`), {
                     method: 'GET',
                     credentials: 'include',
-          headers
                 });
         if (!response.ok) {
           throw new Error('Network response was not ok');
