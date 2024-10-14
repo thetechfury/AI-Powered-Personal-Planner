@@ -37,7 +37,6 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.admin',
-    "daphne",
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -45,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'event',
-    'chat',
 ]
 
 MIDDLEWARE = [
@@ -59,8 +57,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-base_url = env('BASE_URL')
-
 # Cors Settings
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
 
@@ -69,7 +65,6 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_HEADERS = (
     *default_headers,
-    "session-id",
 )
 CORS_ALLOW_ALL_HEADERS = False
 CORS_PREFLIGHT_MAX_AGE = 3600
@@ -95,7 +90,6 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = "backend.asgi.application"
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
@@ -151,14 +145,4 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
-}
-
-# Channel layers
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
 }

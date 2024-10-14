@@ -1,6 +1,5 @@
 import uuid
 
-from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
@@ -27,11 +26,8 @@ class CustomUserViewSet(GenericAPIView):
     def get_session_id(self, request):
         http_cookie = request.META.get('HTTP_COOKIE', '')
         session_id = None
-        # Split the cookie string into individual cookies
         cookies = http_cookie.split(';')
-        # Iterate over each cookie to find the session_id
         for cookie in cookies:
-            # Strip leading/trailing whitespace and split into key-value pair
             key_value = cookie.strip().split('=')
             if len(key_value) == 2:
                 key, value = key_value
