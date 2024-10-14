@@ -14,7 +14,7 @@ class CustomUserViewSet(GenericAPIView):
     serializer_class = CustomUserSerializer
 
     def get(self, request):
-        session_id = request.META.get('HTTP_SESSION_ID', None)
+        session_id = self.get_session_id(request)
         if session_id:
             user = CustomUser.objects.filter(session_id=session_id).first()
             if not user:
@@ -23,6 +23,22 @@ class CustomUserViewSet(GenericAPIView):
             user = self.create_user()
         serializer = CustomUserSerializer(user)
         return Response(serializer.data)
+
+    def get_session_id(self, request):
+        http_cookie = request.META.get('HTTP_COOKIE', '')
+        session_id = None
+        # Split the cookie string into individual cookies
+        cookies = http_cookie.split(';')
+        # Iterate over each cookie to find the session_id
+        for cookie in cookies:
+            # Strip leading/trailing whitespace and split into key-value pair
+            key_value = cookie.strip().split('=')
+            if len(key_value) == 2:
+                key, value = key_value
+                if key == 'session_id':
+                    session_id = value
+                    break
+        return session_id
 
     def create_user(self):
         session_id = str(uuid.uuid4())
