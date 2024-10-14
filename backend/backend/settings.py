@@ -49,9 +49,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -62,19 +62,18 @@ MIDDLEWARE = [
 base_url = env('BASE_URL')
 
 # Cors Settings
-# CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', base_url]
-#
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     base_url,
-# ]
-# CORS_ALLOWED_HEADERS = list(default_headers) + [
-#     'access-control-allow-headers',
-#     'session_id',
-# ]
-# CORS_ALLOW_ALL_HEADERS = False
-# CORS_PREFLIGHT_MAX_AGE = 3600
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', base_url]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    base_url,
+]
+CORS_ALLOWED_HEADERS = list(default_headers) + [
+    'access-control-allow-headers',
+    'session_id',
+]
+CORS_ALLOW_ALL_HEADERS = True
+CORS_PREFLIGHT_MAX_AGE = 3600
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = ['http://localhost:3000', ]
 
