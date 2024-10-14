@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     "daphne",
     'django.contrib.auth',
@@ -43,16 +44,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
     'event',
     'chat',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -62,20 +62,19 @@ MIDDLEWARE = [
 base_url = env('BASE_URL')
 
 # Cors Settings
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', base_url]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    base_url,
 ]
-CORS_ALLOWED_HEADERS = list(default_headers) + [
-    'access-control-allow-headers',
-    'session_id',
-]
-CORS_ALLOW_ALL_HEADERS = True
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "session-id",
+)
+CORS_ALLOW_ALL_HEADERS = False
 CORS_PREFLIGHT_MAX_AGE = 3600
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = ['http://localhost:3000', ]
+CORS_ORIGIN_WHITELIST = ['localhost:3000', ]
 
 ROOT_URLCONF = 'backend.urls'
 
