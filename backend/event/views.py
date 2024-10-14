@@ -14,7 +14,7 @@ class CustomUserViewSet(GenericAPIView):
     serializer_class = CustomUserSerializer
 
     def get(self, request):
-        session_id = request.COOKIES.get('session_id', None)
+        session_id = request.META.get('HTTP_SESSION_ID', None)
         if session_id:
             user = CustomUser.objects.filter(session_id=session_id).first()
             if not user:
@@ -22,8 +22,7 @@ class CustomUserViewSet(GenericAPIView):
         else:
             user = self.create_user()
         serializer = CustomUserSerializer(user)
-        response = Response(serializer.data)
-        return response
+        return Response(serializer.data)
 
     def create_user(self):
         session_id = str(uuid.uuid4())

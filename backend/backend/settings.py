@@ -59,19 +59,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ngrok_url = env('NGROK_URL')
+base_url = env('BASE_URL')
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', ngrok_url]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', base_url]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    ngrok_url,
+    base_url,
 ]
 CORS_ALLOWED_HEADERS = list(default_headers) + [
     'access-control-allow-headers',
+    'session_id',
 ]
-CORS_ALLOW_ALL_HEADERS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_HEADERS = False
 CORS_PREFLIGHT_MAX_AGE = 3600
 
 ROOT_URLCONF = 'backend.urls'
