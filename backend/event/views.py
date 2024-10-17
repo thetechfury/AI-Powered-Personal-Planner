@@ -90,18 +90,39 @@ class Pagination(PageNumberPagination):
     page_size_query_param = 'page'
 
 
+class ChatPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class ChatListViewSet(ListAPIView):
-    queryset = Chat.objects.all().order_by('-created_at')
     serializer_class = ChatSerializer
-    pagination_class = Pagination
+    pagination_class = ChatPagination
 
     def get_queryset(self):
         session_id = self.request.query_params.get('session_id', None)
         if session_id:
             try:
                 user = CustomUser.objects.get(session_id=session_id)
-                chat_messages = Chat.objects.filter(user=user).order_by('-created_at')
+                return Chat.objects.filter(user=user).order_by('-created_at')
             except CustomUser.DoesNotExist:
-                return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"messages": chat_messages}, status=status.HTTP_200_OK)
-        return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
+                # If the session is invalid, return an empty queryset
+                return Chat.objects.none()
+        return Chat.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        session_id = request.query_params.get('session_id', None)
+        if not session_id:
+            return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset.exists():
+            return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
