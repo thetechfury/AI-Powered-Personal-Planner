@@ -67,13 +67,22 @@ class ChatViewSet(GenericAPIView):
         if text and session_id:
             try:
                 user = CustomUser.objects.get(session_id=session_id)
-                Chat.objects.create(text=text, send_by='user', user=user)
+                Chat.objects.create(
+                    text=text,
+                    send_by='user',
+                    user=user
+                )
             except CustomUser.DoesNotExist:
                 return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
 
         message_to_send = "helloworld"
+        Chat.objects.create(
+            text=message_to_send,
+            send_by='ai',
+            user=user
+        )
         return Response({"message": message_to_send}, status=status.HTTP_200_OK)
 
 
