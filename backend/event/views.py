@@ -3,6 +3,7 @@ import uuid
 from rest_framework import viewsets
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -58,6 +59,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ChatViewSet(GenericAPIView):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request):
         text = request.data.get('input_text', '')
