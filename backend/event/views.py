@@ -11,26 +11,12 @@ from event.models import CustomUser, Task, Category, Chat
 from event.serializers import CustomUserSerializer, TaskSerializer, CategorySerializer, ChatSerializer
 
 
-def get_session_id(request):
-    http_cookie = request.META.get('HTTP_COOKIE', '')
-    session_id = None
-    cookies = http_cookie.split(';')
-    for cookie in cookies:
-        key_value = cookie.strip().split('=')
-        if len(key_value) == 2:
-            key, value = key_value
-            if key == 'session_id':
-                session_id = value
-                break
-    return session_id
-
-
 class CustomUserViewSet(GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
     def get(self, request):
-        session_id = get_session_id(request)
+        session_id = self.get_session_id(request)
         if session_id:
             user = CustomUser.objects.filter(session_id=session_id).first()
             if not user:
@@ -44,6 +30,19 @@ class CustomUserViewSet(GenericAPIView):
         session_id = str(uuid.uuid4())
         user = CustomUser.objects.create(session_id=session_id)
         return user
+
+    def get_session_id(self, request):
+        http_cookie = request.META.get('HTTP_COOKIE', '')
+        session_id = None
+        cookies = http_cookie.split(';')
+        for cookie in cookies:
+            key_value = cookie.strip().split('=')
+            if len(key_value) == 2:
+                key, value = key_value
+                if key == 'session_id':
+                    session_id = value
+                    break
+        return session_id
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -62,8 +61,8 @@ class ChatViewSet(GenericAPIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        text = request.data.get('input_text', '')
-        session_id = get_session_id(request)
+        text = request.data.get('text', '')
+        session_id = request.data.get('sessionId', '')
 
         if text and session_id:
             try:
