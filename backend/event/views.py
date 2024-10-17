@@ -1,7 +1,8 @@
 import uuid
 
 from rest_framework import viewsets
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -59,11 +60,11 @@ class ChatViewSet(GenericAPIView):
 
     def post(self, request):
         text = request.data.get('input_text', '')
-        user_session = request.data.get('user_session', '')
+        user_session = request.data.get('session_id', '')
 
         if text and user_session:
             try:
-                user = CustomUser.objects.get(session=user_session)
+                user = CustomUser.objects.get(session_id=user_session)
                 Chat.objects.create(text=text, send_by='user', user=user)
             except CustomUser.DoesNotExist:
                 return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
@@ -72,3 +73,17 @@ class ChatViewSet(GenericAPIView):
 
         message_to_send = "helloworld"
         return Response({"message": message_to_send}, status=status.HTTP_200_OK)
+
+class Pagination(PageNumberPagination):
+    page_size_query_param = 'page'
+
+class ChatListViewSet(ListAPIView):
+    queryset = Chat.objects.all().order_by('-created_at')
+    serializer_class = ChatSerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        user_session = self.request.query_params.get('session_id', None)
+        if user_session:
+            return Chat.objects.filter(user__session_id=user_session).order_by('-created_at')
+        return Chat.objects.all().order_by('-created_at')
