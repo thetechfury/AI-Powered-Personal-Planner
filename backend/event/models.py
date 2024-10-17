@@ -65,3 +65,17 @@ class Task(models.Model):
                 raise ValidationError("The provided end time does not match the start time and duration.")
 
         super().save(*args, **kwargs)
+
+
+class Chat(models.Model):
+    SENDER_CHOICES = [
+        ('user', 'User'),
+        ('ai', 'AI Bot'),
+    ]
+    text = models.TextField()
+    send_by = models.CharField(max_length=45, choices=SENDER_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Chat {self.id} - {self.user.session_id}"

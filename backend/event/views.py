@@ -3,9 +3,10 @@ import uuid
 from rest_framework import viewsets
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+from rest_framework import status
 
-from event.models import CustomUser, Task, Category
-from event.serializers import CustomUserSerializer, TaskSerializer, CategorySerializer
+from event.models import CustomUser, Task, Category, Chat
+from event.serializers import CustomUserSerializer, TaskSerializer, CategorySerializer, ChatSerializer
 
 
 class CustomUserViewSet(GenericAPIView):
@@ -21,7 +22,7 @@ class CustomUserViewSet(GenericAPIView):
         else:
             user = self.create_user()
         serializer = CustomUserSerializer(user)
-        return Response(serializer.data)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def get_session_id(self, request):
         http_cookie = request.META.get('HTTP_COOKIE', '')
@@ -50,3 +51,24 @@ class TaskViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+
+class ChatViewSet(GenericAPIView):
+    queryset = Chat.objects.all()
+    serializer_class = ChatSerializer
+
+    def post(self, request):
+        text = request.data.get('input_text', '')
+        user_session = request.data.get('user_session', '')
+
+        if text and user_session:
+            try:
+                user = CustomUser.objects.get(session=user_session)
+                Chat.objects.create(text=text, send_by='user', user=user)
+            except CustomUser.DoesNotExist:
+                return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
+
+        message_to_send = "helloworld"
+        return Response({"message": message_to_send}, status=status.HTTP_200_OK)

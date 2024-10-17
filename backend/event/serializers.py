@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Category, Task
+from event.models import CustomUser, Category, Task, Chat
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -24,3 +24,9 @@ class TaskSerializer(serializers.ModelSerializer):
             'id', 'title', 'task_type', 'date', 'start_time', 'end_time',
             'recurring', 'category', 'user'
         ]
+
+
+class ChatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Chat
+        fields = ['id', 'text', 'send_by', 'created_at', 'user']
