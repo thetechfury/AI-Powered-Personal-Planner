@@ -98,5 +98,6 @@ class ChatListViewSet(ListAPIView):
     def get_queryset(self):
         user_session = self.request.query_params.get('session_id', None)
         if user_session:
-            return Chat.objects.filter(user__session_id=user_session).order_by('-created_at')
-        return Chat.objects.all().order_by('-created_at')
+            chat_messages = Chat.objects.filter(user__session_id=user_session).order_by('-created_at')
+            return Response({"messages": chat_messages}, status=status.HTTP_200_OK)
+        return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
