@@ -1,12 +1,9 @@
-import uuid
-
 from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
-
+from django.utils import timezone
 from event.decorators import custom_user_authentication
 from event.models import CustomUser, Task, Chat, Category
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, CategorySerializer
@@ -51,29 +48,53 @@ class ChatListViewSet(ListAPIView):
     serializer_class = ChatSerializer
     pagination_class = Pagination
 
-    @custom_user_authentication
+    # @custom_user_authentication
     def get_queryset(self):
-        user = self.request.user
+        session_id = self.request.META.get('HTTP_SESSION_ID', '')
+        user = CustomUser.objects.filter(session_id=session_id).first()
         if user:
             return Chat.objects.filter(user=user).order_by('created_at')
         return Chat.objects.none()
 
-    @custom_user_authentication
+    # @custom_user_authentication
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        session_id = self.request.META.get('HTTP_SESSION_ID', '')
+        if not session_id:
+            return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TaskListViewSet(ListAPIView):
     serializer_class = TaskSerializer
     pagination_class = Pagination
 
-    @custom_user_authentication
+    # @custom_user_authentication
     def get_queryset(self):
-        return Task.objects.filter(user=self.request.user).order_by('created_at')
+        session_id = self.request.META.get('HTTP_SESSION_ID', '')
+        user = CustomUser.objects.filter(session_id=session_id).first()
+        if user:
+            return Task.objects.filter(user=user, date__gt=timezone.now())
+        return Task.objects.none()
 
-    @custom_user_authentication
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        session_id = self.request.META.get('HTTP_SESSION_ID', '')
+        if not session_id:
+            return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TaskCreateView(CreateAPIView):
@@ -103,8 +124,5 @@ class CategoryViewSet(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def perform_create(self, serializer):
         serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

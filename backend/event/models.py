@@ -34,7 +34,7 @@ class Task(models.Model):
 
     title = models.CharField(max_length=50)
     task_type = models.CharField(max_length=45, choices=TASK_TYPES)
-    date = models.DateField()
+    date = models.DateTimeField()
     start_time = models.TimeField()
     end_time = models.TimeField()
     duration = models.PositiveIntegerField(default=0)
