@@ -60,12 +60,6 @@ class CustomUserViewSet(SessionMixin, GenericAPIView):
         return CustomUser.objects.create(session_id=str(uuid.uuid4()))
 
 
-def get_session_id_from_cookie(self):
-    cookies = self.request.headers['Cookie'].split('; ')
-    session_id = next((cookie.split('=')[1] for cookie in cookies if cookie.startswith('session_id=')), None)
-    return session_id
-
-
 class ChatCreateViewSet(SessionMixin, GenericAPIView):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
@@ -73,7 +67,7 @@ class ChatCreateViewSet(SessionMixin, GenericAPIView):
 
     def post(self, request):
         text = request.data.get('text', '')
-        session_id = get_session_id_from_cookie(self)
+        session_id = request.headers.get('session_id', '')
         user = self.get_user_by_session(session_id)
 
         if text and user:
@@ -89,14 +83,14 @@ class ChatListViewSet(SessionMixin, ListAPIView):
     pagination_class = Pagination
 
     def get_queryset(self):
-        session_id =get_session_id_from_cookie(self)
+        session_id = self.request.headers.get('session_id', '')
         user = self.get_user_by_session(session_id)
         if user:
             return Chat.objects.filter(user=user).order_by('-created_at')
         return Chat.objects.none()
 
     def list(self, request, *args, **kwargs):
-        session_id = get_session_id_from_cookie(self)
+        session_id = request.headers.get('session_id', '')
         if not session_id or not self.get_user_by_session(session_id):
             return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -108,14 +102,14 @@ class TaskListViewSet(SessionMixin, ListAPIView):
     pagination_class = Pagination
 
     def get_queryset(self):
-        session_id = get_session_id_from_cookie(self)
+        session_id = self.request.headers.get('session_id', '')
         user = self.get_user_by_session(session_id)
         if user:
             return Task.objects.filter(user=user).order_by('-created_at')
         return Task.objects.none()
 
     def list(self, request, *args, **kwargs):
-        session_id = get_session_id_from_cookie(self)
+        session_id = request.headers.get('session_id', '')
         if not session_id or not self.get_user_by_session(session_id):
             return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
 
