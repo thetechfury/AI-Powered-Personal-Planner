@@ -11,10 +11,14 @@ from event.models import CustomUser, Task, Chat, Category
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, CategorySerializer
 
 
-class Pagination(PageNumberPagination):
+class ChatPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 100
+
+
+class TaskPagination(PageNumberPagination):
+    page_size = 3
+    page_size_query_param = 'page_size'
 
 
 class CustomUserViewSet(GenericAPIView):
@@ -52,7 +56,7 @@ class ChatCreateViewSet(GenericAPIView):
 
 class ChatListViewSet(ListAPIView):
     serializer_class = ChatSerializer
-    pagination_class = Pagination
+    pagination_class = ChatPagination
 
     # @custom_user_authentication
     def get_queryset(self):
@@ -79,14 +83,14 @@ class ChatListViewSet(ListAPIView):
 
 class TaskListViewSet(ListAPIView):
     serializer_class = TaskSerializer
-    pagination_class = Pagination
+    pagination_class = TaskPagination
 
     # @custom_user_authentication
     def get_queryset(self):
         session_id = self.request.META.get('HTTP_SESSION_ID', '')
         user = CustomUser.objects.filter(session_id=session_id).first()
         if user:
-            return Task.objects.filter(user=user, date__gt=timezone.now())
+            return Task.objects.filter(user=user, date__gt=timezone.now()).order_by('date')
         return Task.objects.none()
 
     def list(self, request, *args, **kwargs):
@@ -119,6 +123,7 @@ class TaskCreateView(CreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": "Invalid user"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryViewSet(GenericAPIView):
     queryset = Category.objects.all()
