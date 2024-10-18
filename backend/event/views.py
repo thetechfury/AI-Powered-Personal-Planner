@@ -25,12 +25,9 @@ class CustomUserViewSet(GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
-    # @custom_user_authentication
+    @custom_user_authentication
     def get(self, request):
-        session_id = self.request.META.get('HTTP_SESSION_ID', '')
-        user = CustomUser.objects.filter(session_id=session_id).first()
-        if not user:
-            user = CustomUser.objects.create(session_id=str(uuid.uuid4()))
+        user= request.user
         serializer = CustomUserSerializer(user)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -40,18 +37,17 @@ class ChatCreateViewSet(GenericAPIView):
     serializer_class = ChatSerializer
     permission_classes = [AllowAny]
 
-    # @custom_user_authentication
+    @custom_user_authentication
     def post(self, request):
         text = request.data.get('text', '')
-        session_id = self.request.META.get('HTTP_SESSION_ID', '')
-        user = CustomUser.objects.filter(session_id=session_id).first()
+        user = request.user
 
-        if text and user:
+        if text:
             Chat.objects.create(text=text, send_by='user', user=user)
             message_to_send = "helloworld"
             Chat.objects.create(text=message_to_send, send_by='ai', user=user)
             return Response({"message": message_to_send}, status=status.HTTP_200_OK)
-        return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Invalid text"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChatListViewSet(ListAPIView):
@@ -117,6 +113,7 @@ class TaskCreateView(CreateAPIView):
         user = CustomUser.objects.filter(session_id=session_id).first()
         if user:
             request.data['user'] = user.id
+            request.data['category'] = 1
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
