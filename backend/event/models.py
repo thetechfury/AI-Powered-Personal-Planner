@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -36,9 +36,9 @@ class Task(models.Model):
     task_type = models.CharField(max_length=45, choices=TASK_TYPES)
     date = models.DateField()
     start_time = models.TimeField()
-    end_time = models.TimeField(blank=True, null=True)
-    hours = models.PositiveIntegerField(blank=True, null=True)
-    recurring = models.CharField(max_length=45)
+    end_time = models.TimeField()
+    duration = models.PositiveIntegerField(default=0)
+    recurring = models.CharField(max_length=250, null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
@@ -46,24 +46,17 @@ class Task(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
-        if self.hours is not None and self.end_time is None:
-            # Calculate end_time based on hours
-            self.end_time = (datetime.combine(self.date, self.start_time) + timedelta(hours=self.hours)).time()
-
-        elif self.end_time is not None and self.hours is None:
-            # Calculate hours based on start_time and end_time
-            start = datetime.combine(self.date, self.start_time)
-            end = datetime.combine(self.date, self.end_time)
-            if end < start:
-                raise ValidationError("End time cannot be earlier than start time.")
-            self.hours = int((end - start).total_seconds() // 3600)
-
-        elif self.hours is not None and self.end_time is not None:
-            # Ensure hours and end_time match
-            calculated_end_time = (datetime.combine(self.date, self.start_time) + timedelta(hours=self.hours)).time()
+        current_datetime = timezone.now()
+        if self.date < current_datetime.date():
+            raise ValidationError("The task date cannot be in the past.")
+        task_start_datetime = datetime.combine(self.date, self.start_time)
+        if self.date == current_datetime.date() and task_start_datetime < current_datetime:
+            raise ValidationError("The start time cannot be in the past.")
+        if self.duration is not None and self.end_time is not None:
+            calculated_end_time = (
+                        datetime.combine(self.date, self.start_time) + timedelta(minutes=self.duration)).time()
             if calculated_end_time != self.end_time:
                 raise ValidationError("The provided end time does not match the start time and duration.")
-
         super().save(*args, **kwargs)
 
 

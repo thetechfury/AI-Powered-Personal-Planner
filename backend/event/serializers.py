@@ -17,7 +17,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'hours', 'recurring', 'category', 'user']
+        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'category', 'user']
 
     def validate(self, data):
         if data['end_time'] and data['start_time'] and data['end_time'] <= data['start_time']:

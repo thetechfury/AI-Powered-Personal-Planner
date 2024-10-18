@@ -5,35 +5,11 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.viewsets import ModelViewSet
 
-from event.models import CustomUser, Task, Chat
-from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer
-
-
-class SessionMixin:
-    """
-    A mixin to handle session-based user retrieval and validation.
-    """
-
-    def get_user_by_session(self, session_id):
-        try:
-            return CustomUser.objects.get(session_id=session_id)
-        except CustomUser.DoesNotExist:
-            return None
-
-    def get_session_id(self, request):
-        """
-        Retrieve session_id from cookies in the request.
-        """
-        http_cookie = request.META.get('HTTP_COOKIE', '')
-        cookies = http_cookie.split(';')
-        for cookie in cookies:
-            key_value = cookie.strip().split('=')
-            if len(key_value) == 2:
-                key, value = key_value
-                if key == 'session_id':
-                    return value
-        return None
+from event.decorators import custom_user_authentication
+from event.models import CustomUser, Task, Chat, Category
+from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, CategorySerializer
 
 
 class Pagination(PageNumberPagination):
@@ -42,35 +18,28 @@ class Pagination(PageNumberPagination):
     max_page_size = 100
 
 
-class CustomUserViewSet(SessionMixin, GenericAPIView):
+class CustomUserViewSet(GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
+    @custom_user_authentication
     def get(self, request):
-        session_id = request.META.get('HTTP_SESSION_ID', '')
-        user = self.get_user_by_session(session_id) if session_id else None
-
-        if not user:
-            user = self.create_user()
-
+        user = request.user
         serializer = CustomUserSerializer(user)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
-    def create_user(self):
-        return CustomUser.objects.create(session_id=str(uuid.uuid4()))
 
-
-class ChatCreateViewSet(SessionMixin, GenericAPIView):
+class ChatCreateViewSet(GenericAPIView):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
     permission_classes = [AllowAny]
 
+    @custom_user_authentication
     def post(self, request):
         text = request.data.get('text', '')
-        session_id = request.META.get('HTTP_SESSION_ID', '')
-        user = self.get_user_by_session(session_id)
+        user = request.user
 
-        if text and user:
+        if text:
             Chat.objects.create(text=text, send_by='user', user=user)
             message_to_send = "helloworld"
             Chat.objects.create(text=message_to_send, send_by='ai', user=user)
@@ -78,41 +47,32 @@ class ChatCreateViewSet(SessionMixin, GenericAPIView):
         return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ChatListViewSet(SessionMixin, ListAPIView):
+class ChatListViewSet(ListAPIView):
     serializer_class = ChatSerializer
     pagination_class = Pagination
 
+    @custom_user_authentication
     def get_queryset(self):
-        session_id = self.request.META.get('HTTP_SESSION_ID', '')
-        user = self.get_user_by_session(session_id)
+        user = self.request.user
         if user:
-            return Chat.objects.filter(user=user).order_by('-created_at')
+            return Chat.objects.filter(user=user).order_by('created_at')
         return Chat.objects.none()
 
+    @custom_user_authentication
     def list(self, request, *args, **kwargs):
-        session_id = request.META.get('HTTP_SESSION_ID', '')
-        if not session_id or not self.get_user_by_session(session_id):
-            return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
-
         return super().list(request, *args, **kwargs)
 
 
-class TaskListViewSet(SessionMixin, ListAPIView):
+class TaskListViewSet(ListAPIView):
     serializer_class = TaskSerializer
     pagination_class = Pagination
 
+    @custom_user_authentication
     def get_queryset(self):
-        session_id = self.request.META.get('HTTP_SESSION_ID', '')
-        user = self.get_user_by_session(session_id)
-        if user:
-            return Task.objects.filter(user=user).order_by('-created_at')
-        return Task.objects.none()
+        return Task.objects.filter(user=self.request.user).order_by('created_at')
 
+    @custom_user_authentication
     def list(self, request, *args, **kwargs):
-        session_id = request.META.get('HTTP_SESSION_ID', '')
-        if not session_id or not self.get_user_by_session(session_id):
-            return Response({"error": "Invalid user session"}, status=status.HTTP_400_BAD_REQUEST)
-
         return super().list(request, *args, **kwargs)
 
 
@@ -120,8 +80,31 @@ class TaskCreateView(CreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
+    @custom_user_authentication
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        request.data['user'] = user.id
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CategoryViewSet(GenericAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        categories = self.get_queryset()
+        serializer = self.get_serializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        serializer.save()
