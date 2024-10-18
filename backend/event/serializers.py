@@ -15,15 +15,14 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    user = CustomUserSerializer(read_only=True)
-
     class Meta:
         model = Task
-        fields = [
-            'id', 'title', 'task_type', 'date', 'start_time', 'end_time',
-            'recurring', 'category', 'user'
-        ]
+        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'hours', 'recurring', 'category', 'user']
+
+    def validate(self, data):
+        if data['end_time'] and data['start_time'] and data['end_time'] <= data['start_time']:
+            raise serializers.ValidationError("End time must be after start time.")
+        return data
 
 
 class ChatSerializer(serializers.ModelSerializer):
