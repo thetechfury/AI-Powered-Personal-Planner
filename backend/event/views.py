@@ -67,7 +67,7 @@ class ChatCreateViewSet(SessionMixin, GenericAPIView):
 
     def post(self, request):
         text = request.data.get('text', '')
-        session_id = request.data.get('sessionId', '')
+        session_id = request.header.get('session_id', '')
         user = self.get_user_by_session(session_id)
 
         if text and user:
