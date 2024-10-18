@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'event',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +66,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_HEADERS = (
     *default_headers,
+    'session_id',
 )
 CORS_ALLOW_ALL_HEADERS = False
 CORS_PREFLIGHT_MAX_AGE = 3600
