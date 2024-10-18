@@ -11,22 +11,23 @@ from event.models import CustomUser, Task, Chat, Category
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, CategorySerializer
 
 
-class Pagination(PageNumberPagination):
+class ChatPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 100
+
+
+class TaskPagination(PageNumberPagination):
+    page_size = 3
+    page_size_query_param = 'page_size'
 
 
 class CustomUserViewSet(GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
-    # @custom_user_authentication
+    @custom_user_authentication
     def get(self, request):
-        session_id = self.request.META.get('HTTP_SESSION_ID', '')
-        user = CustomUser.objects.filter(session_id=session_id).first()
-        if not user:
-            user = CustomUser.objects.create(session_id=str(uuid.uuid4()))
+        user= request.user
         serializer = CustomUserSerializer(user)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -36,23 +37,22 @@ class ChatCreateViewSet(GenericAPIView):
     serializer_class = ChatSerializer
     permission_classes = [AllowAny]
 
-    # @custom_user_authentication
+    @custom_user_authentication
     def post(self, request):
         text = request.data.get('text', '')
-        session_id = self.request.META.get('HTTP_SESSION_ID', '')
-        user = CustomUser.objects.filter(session_id=session_id).first()
+        user = request.user
 
-        if text and user:
+        if text:
             Chat.objects.create(text=text, send_by='user', user=user)
             message_to_send = "helloworld"
             Chat.objects.create(text=message_to_send, send_by='ai', user=user)
             return Response({"message": message_to_send}, status=status.HTTP_200_OK)
-        return Response({"error": "Invalid user session or text"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Invalid text"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChatListViewSet(ListAPIView):
     serializer_class = ChatSerializer
-    pagination_class = Pagination
+    pagination_class = ChatPagination
 
     # @custom_user_authentication
     def get_queryset(self):
@@ -79,14 +79,14 @@ class ChatListViewSet(ListAPIView):
 
 class TaskListViewSet(ListAPIView):
     serializer_class = TaskSerializer
-    pagination_class = Pagination
+    pagination_class = TaskPagination
 
     # @custom_user_authentication
     def get_queryset(self):
         session_id = self.request.META.get('HTTP_SESSION_ID', '')
         user = CustomUser.objects.filter(session_id=session_id).first()
         if user:
-            return Task.objects.filter(user=user, date__gt=timezone.now())
+            return Task.objects.filter(user=user, date__gt=timezone.now()).order_by('date')
         return Task.objects.none()
 
     def list(self, request, *args, **kwargs):
@@ -113,12 +113,14 @@ class TaskCreateView(CreateAPIView):
         user = CustomUser.objects.filter(session_id=session_id).first()
         if user:
             request.data['user'] = user.id
+            request.data['category'] = 1
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": "Invalid user"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryViewSet(GenericAPIView):
     queryset = Category.objects.all()
