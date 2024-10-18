@@ -47,7 +47,7 @@ class CustomUserViewSet(SessionMixin, GenericAPIView):
     serializer_class = CustomUserSerializer
 
     def get(self, request):
-        session_id = self.get_session_id(request)
+        session_id = request.META.get('HTTP_SESSION_ID', '')
         user = self.get_user_by_session(session_id) if session_id else None
 
         if not user:
