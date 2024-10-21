@@ -5,11 +5,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 
-from backend.urls import header_param
 from event.decorators import custom_user_authentication
 from event.models import CustomUser, Task, Chat, Tag
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, TagSerializer
-from event.utils import ChatPagination, TaskPagination
+from event.utils import ChatPagination, TaskPagination, header_param
 
 
 class CustomUserViewSet(GenericAPIView):
