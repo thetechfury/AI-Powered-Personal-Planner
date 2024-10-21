@@ -17,7 +17,7 @@ class TagSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag']
+        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag', 'user']
         read_only_fields = ['user']
 
     def validate(self, data):
@@ -29,5 +29,5 @@ class TaskSerializer(serializers.ModelSerializer):
 class ChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chat
-        fields = ['id', 'text']
+        fields = ['id', 'text', 'send_by', 'user', 'created_at']
         read_only_fields = ['send_by', 'user', 'created_at']
