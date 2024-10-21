@@ -1,51 +1,35 @@
-import React, {createContext, useContext, useEffect, useState} from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import {BASE_URL} from "./BaseUrl";
+import {fetchUsers} from "./components/api/CustomUserApi";
 
 const ApiContext = createContext();
 
-export const ApiProvider = ({children}) => {
-    const [users, setUsers] = useState([]);
+export const ApiProvider = ({ children }) => {
+    const [user, setUser] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const session_id = Cookies.get('session_id');
 
     useEffect(() => {
-        const fetchUsers = async () => {
+        const loadUser = async () => {
             try {
-                const response = await fetch((`${BASE_URL}/api/custom_user`), {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Session-Id': session_id || '',
-                    },
-                });
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data = await response.json();
-                 if (!session_id) {
-                    Cookies.set('session_id', data.session_id);
-                }
-                setUsers(data);
+                const data = await fetchUsers(session_id);
+                setUser(data);
             } catch (err) {
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
-
-        fetchUsers();
-    }, []);
+        loadUser();
+    }, [session_id]);
 
     return (
-        <ApiContext.Provider value={{users, loading, error}}>
+        <ApiContext.Provider value={{ user, loading, error }}>
             {children}
         </ApiContext.Provider>
     );
 };
-
-// Custom hook to use the ApiContext
-export const useApi = () => {
+export const useUserApi = () => {
     return useContext(ApiContext);
 };

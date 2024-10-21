@@ -1,7 +1,7 @@
-const Input = ({type, placeholder, className}) => {
+const Input = ({type, placeholder,value,onChange,onKeyDown, className}) => {
     return (
         <div className='w-full'>
-            <input type={type} placeholder={placeholder} className={className}/>
+            <input value={value} type={type} onChange={onChange} onKeyDown={onKeyDown} placeholder={placeholder} className={className}/>
         </div>
     )
 };
