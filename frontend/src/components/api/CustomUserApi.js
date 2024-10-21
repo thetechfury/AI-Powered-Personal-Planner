@@ -15,7 +15,7 @@ export const fetchUsers = async (session_id) => {
     }
     const result = await response.json();
     if (!session_id) {
-        Cookies.set('session_id', result.data.session_id);
+        Cookies.set('session_id', result.session_id);
     }
-    return result.data;
+    return result;
 };
