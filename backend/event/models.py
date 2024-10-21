@@ -12,7 +12,7 @@ class CustomUser(models.Model):
         return f"User {self.id} - {self.session_id}"
 
 
-class Category(models.Model):
+class Tag(models.Model):
     title = models.CharField(max_length=50, unique=True)
     color = models.CharField(max_length=45, unique=True)
 
@@ -39,7 +39,7 @@ class Task(models.Model):
     end_time = models.TimeField()
     duration = models.PositiveIntegerField(default=0)
     recurring = models.CharField(max_length=250, null=True, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
     def __str__(self):

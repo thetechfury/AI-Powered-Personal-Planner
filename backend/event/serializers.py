@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from event.models import CustomUser, Category, Task, Chat
+from event.models import CustomUser, Tag, Task, Chat
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -8,16 +8,17 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = ['id', 'session_id', 'notifications_preferences']
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class TagSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
+        model = Tag
         fields = ['id', 'title', 'color']
 
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'category', 'user']
+        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag']
+        read_only_fields = ['user']
 
     def validate(self, data):
         if data['end_time'] and data['start_time'] and data['end_time'] <= data['start_time']:
