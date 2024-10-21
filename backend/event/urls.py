@@ -7,5 +7,6 @@ urlpatterns = [
     path('chat-history', views.ChatListViewSet.as_view(), name='chats'),
     path('task-history', views.TaskListViewSet.as_view(), name='tasks'),
     path('create-task', views.TaskCreateView.as_view(), name='create_task'),
-    path('tags', views.TagsViewSet.as_view(), name='tags'),
+    path('tags-list', views.TagsListViewSet.as_view(), name='tags-list'),
+    path('create-tag', views.TagsCreateViewSet.as_view(), name='create-tag'),
 ]

@@ -32,7 +32,7 @@ class Task(models.Model):
         ('flexible', 'Flexible'),
     ]
 
-    STATUSES =[
+    STATUSES = [
         ('pending', 'Pending'),
         ('completed', 'Completed'),
         ('canceled', 'Canceled'),
@@ -64,9 +64,12 @@ class Task(models.Model):
             raise ValidationError("The start time cannot be in the past.")
         if self.duration is not None and self.end_time is not None:
             calculated_end_time = (
-                        datetime.combine(self.date, self.start_time) + timedelta(minutes=self.duration)).time()
+                    datetime.combine(self.date, self.start_time) + timedelta(minutes=self.duration)).time()
             if calculated_end_time != self.end_time:
                 raise ValidationError("The provided end time does not match the start time and duration.")
+        if self.start_time and self.duration is not None:
+            start_datetime = timezone.datetime.combine(self.date, self.start_time)
+            self.end_time = (start_datetime + timedelta(minutes=self.duration)).time()
         super().save(*args, **kwargs)
 
 
