@@ -29,4 +29,5 @@ class TaskSerializer(serializers.ModelSerializer):
 class ChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chat
-        fields = ['id', 'text', 'send_by', 'created_at', 'user']
+        fields = ['id', 'text']
+        read_only_fields = ['send_by', 'user', 'created_at']

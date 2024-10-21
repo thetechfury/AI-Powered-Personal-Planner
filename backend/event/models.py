@@ -32,6 +32,12 @@ class Task(models.Model):
         ('flexible', 'Flexible'),
     ]
 
+    STATUSES =[
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('canceled', 'Canceled'),
+    ]
+
     title = models.CharField(max_length=50)
     task_type = models.CharField(max_length=45, choices=TASK_TYPES)
     date = models.DateTimeField()
@@ -39,11 +45,15 @@ class Task(models.Model):
     end_time = models.TimeField()
     duration = models.PositiveIntegerField(default=0)
     recurring = models.CharField(max_length=250, null=True, blank=True)
+    status = models.CharField(max_length=45, choices=STATUSES, default='pending')
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ['date']
 
     def save(self, *args, **kwargs):
         current_datetime = timezone.now()
@@ -72,3 +82,6 @@ class Chat(models.Model):
 
     def __str__(self):
         return f"Chat {self.id} - {self.user.session_id}"
+
+    class Meta:
+        ordering = ['created_at']

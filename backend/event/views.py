@@ -39,15 +39,14 @@ class ChatCreateViewSet(GenericAPIView):
 
     @custom_user_authentication
     def post(self, request):
-        text = request.data.get('text', '')
         user = request.user
-
-        if text:
-            Chat.objects.create(text=text, send_by='user', user=user)
-            message_to_send = "helloworld"
-            Chat.objects.create(text=message_to_send, send_by='ai', user=user)
-            return Response({"message": message_to_send}, status=status.HTTP_200_OK)
-        return Response({"error": "Invalid text"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save(user=user, send_by='user')
+        message_to_send = "helloworld"
+        Chat.objects.create(text=message_to_send, send_by='ai', user=user)
+        return Response({"message": message_to_send}, status=status.HTTP_200_OK)
 
 
 class ChatListViewSet(GenericAPIView):
@@ -58,7 +57,7 @@ class ChatListViewSet(GenericAPIView):
     @custom_user_authentication
     def get(self, request):
         user = request.user
-        chats = Chat.objects.filter(user=user)
+        chats = Chat.objects.filter(user=user).order_by('created_at')
         page = self.paginate_queryset(chats)
         if page is not None:
             serializer = self.get_paginated_response(ChatSerializer(page, many=True).data)
@@ -76,7 +75,11 @@ class TaskListViewSet(ListAPIView):
     @custom_user_authentication
     def get(self, request):
         user = request.user
-        tasks = Task.objects.filter(user=user)
+        current_time = timezone.now()
+        tasks = Task.objects.filter(user=user).filter(
+            date__gte=current_time.date(),
+            start_time__gt=current_time.time()
+        )
         page = self.paginate_queryset(tasks)
         if page is not None:
             serializer = self.get_paginated_response(ChatSerializer(page, many=True).data)
