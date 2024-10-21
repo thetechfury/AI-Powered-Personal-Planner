@@ -27,7 +27,7 @@ class CustomUserViewSet(GenericAPIView):
 
     @custom_user_authentication
     def get(self, request):
-        user= request.user
+        user = request.user
         serializer = CustomUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -104,7 +104,7 @@ class TaskCreateView(GenericAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class TagsViewSet(GenericAPIView):
+class TagsListViewSet(GenericAPIView):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
@@ -113,6 +113,12 @@ class TagsViewSet(GenericAPIView):
         tags = self.get_queryset()
         serializer = self.get_serializer(tags, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TagsCreateViewSet(GenericAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
