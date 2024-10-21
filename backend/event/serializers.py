@@ -6,6 +6,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'session_id', 'notifications_preferences']
+        extra_kwargs = {
+            'session_id': {
+                'help_text': 'Session id is auto generated.',
+            },
+        }
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -19,6 +24,14 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag', 'user']
         read_only_fields = ['user']
+        extra_kwargs = {
+            'duration': {
+                'help_text': 'Add duration in minutes.'
+            },
+            'recurring': {
+                'help_text': 'Add comma seperated day names.'
+            },
+        }
 
     def validate(self, data):
         if data['end_time'] and data['start_time'] and data['end_time'] <= data['start_time']:

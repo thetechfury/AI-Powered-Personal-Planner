@@ -1,30 +1,22 @@
-import uuid
-
-from rest_framework.generics import GenericAPIView, ListAPIView, CreateAPIView
-from rest_framework.pagination import PageNumberPagination
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+
+from backend.urls import header_param
 from event.decorators import custom_user_authentication
 from event.models import CustomUser, Task, Chat, Tag
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, TagSerializer
-
-
-class ChatPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-
-
-class TaskPagination(PageNumberPagination):
-    page_size = 3
-    page_size_query_param = 'page_size'
+from event.utils import ChatPagination, TaskPagination
 
 
 class CustomUserViewSet(GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
+    @swagger_auto_schema(manual_parameters=[header_param])
     @custom_user_authentication
     def get(self, request):
         user = request.user
@@ -37,6 +29,7 @@ class ChatCreateViewSet(GenericAPIView):
     serializer_class = ChatSerializer
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(manual_parameters=[header_param])
     @custom_user_authentication
     def post(self, request):
         user = request.user
@@ -54,6 +47,7 @@ class ChatListViewSet(GenericAPIView):
     serializer_class = ChatSerializer
     pagination_class = ChatPagination
 
+    @swagger_auto_schema(manual_parameters=[header_param])
     @custom_user_authentication
     def get(self, request):
         user = request.user
@@ -67,11 +61,12 @@ class ChatListViewSet(GenericAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TaskListViewSet(ListAPIView):
+class TaskListViewSet(GenericAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     pagination_class = TaskPagination
 
+    @swagger_auto_schema(manual_parameters=[header_param])
     @custom_user_authentication
     def get(self, request):
         user = request.user
@@ -94,6 +89,7 @@ class TaskCreateView(GenericAPIView):
     serializer_class = TaskSerializer
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(manual_parameters=[header_param])
     @custom_user_authentication
     def post(self, request, *args, **kwargs):
         user = request.user
