@@ -29,7 +29,7 @@ class CustomUserViewSet(GenericAPIView):
     def get(self, request):
         user= request.user
         serializer = CustomUserSerializer(user)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ChatCreateViewSet(GenericAPIView):
@@ -64,7 +64,7 @@ class ChatListViewSet(GenericAPIView):
         else:
             serializer = ChatSerializer(chats, many=True)
 
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TaskListViewSet(ListAPIView):
@@ -86,7 +86,7 @@ class TaskListViewSet(ListAPIView):
         else:
             serializer = ChatSerializer(tasks, many=True)
 
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TaskCreateView(GenericAPIView):
