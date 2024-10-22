@@ -53,7 +53,7 @@ class Task(models.Model):
         return self.title
 
     class Meta:
-        ordering = ['date']
+        ordering = ['-date', '-start_time']
 
     def save(self, *args, **kwargs):
         current_datetime = timezone.now()

@@ -1,5 +1,6 @@
 import random
 
+from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
@@ -73,9 +74,10 @@ class TaskListViewSet(GenericAPIView):
         user = request.user
         current_time = timezone.now()
         tasks = Task.objects.filter(user=user).filter(
-            date__gte=current_time.date(),
-            start_time__gt=current_time.time()
+            Q(date__gt=current_time.date()) |
+            Q(date=current_time.date(), start_time__gt=current_time.time())
         )
+
         page = self.paginate_queryset(tasks)
         if page is not None:
             serializer = self.get_paginated_response(TaskSerializer(page, many=True).data)
