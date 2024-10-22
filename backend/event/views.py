@@ -1,4 +1,5 @@
 import random
+import uuid
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import GenericAPIView
@@ -21,6 +22,8 @@ class CustomUserViewSet(GenericAPIView):
     @custom_user_authentication
     def get(self, request):
         user = request.user
+        if not user:
+            user = CustomUser.objects.create(session_id=str(uuid.uuid4()))
         serializer = CustomUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -1,5 +1,7 @@
-import uuid
 from functools import wraps
+
+from rest_framework.response import Response
+from rest_framework import status
 
 from event.models import CustomUser
 
@@ -11,10 +13,9 @@ def custom_user_authentication(view_func):
         user = CustomUser.objects.filter(session_id=session_id).first()
 
         if not user:
-            user = CustomUser.objects.create(session_id=str(uuid.uuid4()))
+            return Response({'error': 'Invalid Session'}, status=status.HTTP_403_FORBIDDEN)
 
         self.request.user = user
         return view_func(self, request, *args, **kwargs)
 
     return _wrapped_view
-
