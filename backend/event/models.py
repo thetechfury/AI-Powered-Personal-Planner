@@ -42,7 +42,7 @@ class Task(models.Model):
     task_type = models.CharField(max_length=45, choices=TASK_TYPES)
     date = models.DateTimeField()
     start_time = models.TimeField()
-    end_time = models.TimeField()
+    end_time = models.TimeField(null=True, blank=True)
     duration = models.PositiveIntegerField(default=0)
     recurring = models.CharField(max_length=250, null=True, blank=True)
     status = models.CharField(max_length=45, choices=STATUSES, default='pending')

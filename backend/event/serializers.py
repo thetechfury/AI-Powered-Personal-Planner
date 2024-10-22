@@ -23,7 +23,7 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag', 'user']
-        read_only_fields = ['user']
+        read_only_fields = ['end_time', 'user']
         extra_kwargs = {
             'duration': {
                 'help_text': 'Add duration in minutes.'

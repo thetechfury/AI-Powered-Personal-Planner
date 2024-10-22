@@ -1,3 +1,5 @@
+import random
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
@@ -92,11 +94,22 @@ class TaskCreateView(GenericAPIView):
     @custom_user_authentication
     def post(self, request, *args, **kwargs):
         user = request.user
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy()
+        tag_title = data.get('tag', None)
+
+        if tag_title:
+            tag, created = Tag.objects.get_or_create(title=tag_title, defaults={'color': self.generate_random_color()})
+            data['tag'] = tag.pk
+
+        serializer = self.get_serializer(data=data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save(user=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def generate_random_color(self):
+        return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
 
 class TagsListViewSet(GenericAPIView):
