@@ -78,9 +78,9 @@ class TaskListViewSet(GenericAPIView):
         )
         page = self.paginate_queryset(tasks)
         if page is not None:
-            serializer = self.get_paginated_response(ChatSerializer(page, many=True).data)
+            serializer = self.get_paginated_response(TaskSerializer(page, many=True).data)
         else:
-            serializer = ChatSerializer(tasks, many=True)
+            serializer = TaskSerializer(tasks, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

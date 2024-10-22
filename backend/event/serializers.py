@@ -20,6 +20,8 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    tag = TagSerializer(read_only=True)
+
     class Meta:
         model = Task
         fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag', 'user']
@@ -32,11 +34,6 @@ class TaskSerializer(serializers.ModelSerializer):
                 'help_text': 'Add comma seperated day names.'
             },
         }
-
-    # def validate(self, data):
-    #     if data['start_time'] and data['end_time'] <= data['start_time']:
-    #         raise serializers.ValidationError("End time must be after start time.")
-    #     return data
 
 
 class ChatSerializer(serializers.ModelSerializer):
