@@ -62,14 +62,12 @@
     pointer-events: none !important;
 }
 
-/*.css-5ivcmv-MuiButtonBase-root-MuiIconButton-root-MuiPickersCalendarHeader-switchViewButton {*/
-/*    display: none !important;*/
-/*}*/
 .css-5wchs2-MuiDateCalendar-root {
     width: 100% !important;
 }
+
 .css-17f9e7e-MuiTypography-root-MuiDayCalendar-weekDayLabel {
-    width: 100%!important;
+    width: 100% !important;
 }
 
 .css-4k4mmf-MuiButtonBase-root-MuiPickersDay-root {
@@ -105,13 +103,10 @@
     background-color: #1976d2 !important;
     border-radius: 100px !important;
 }
+
 .css-4k4mmf-MuiButtonBase-root-MuiPickersDay-root {
     border-radius: 100px !important;
 }
-.css-4nmryk-MuiBackdrop-root-MuiModal-backdrop {
-    background-color: rgb(0 0 0 / 64%) !important;
-}
-
 
 @keyframes App-logo-spin {
     from {
