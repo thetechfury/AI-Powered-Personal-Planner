@@ -1,5 +1,4 @@
 import random
-import uuid
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import GenericAPIView
@@ -8,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 
-from event.decorators import custom_user_authentication
+from event.decorators import custom_user_authentication, user_authentication
 from event.models import CustomUser, Task, Chat, Tag
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, TagSerializer
 from event.utils import ChatPagination, TaskPagination, header_param
@@ -22,8 +21,6 @@ class CustomUserViewSet(GenericAPIView):
     @custom_user_authentication
     def get(self, request):
         user = request.user
-        if not user:
-            user = CustomUser.objects.create(session_id=str(uuid.uuid4()))
         serializer = CustomUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -34,7 +31,7 @@ class ChatCreateViewSet(GenericAPIView):
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(manual_parameters=[header_param])
-    @custom_user_authentication
+    @user_authentication
     def post(self, request):
         user = request.user
         serializer = self.get_serializer(data=request.data)
@@ -52,7 +49,7 @@ class ChatListViewSet(GenericAPIView):
     pagination_class = ChatPagination
 
     @swagger_auto_schema(manual_parameters=[header_param])
-    @custom_user_authentication
+    @user_authentication
     def get(self, request):
         user = request.user
         chats = Chat.objects.filter(user=user).order_by('created_at')
@@ -71,7 +68,7 @@ class TaskListViewSet(GenericAPIView):
     pagination_class = TaskPagination
 
     @swagger_auto_schema(manual_parameters=[header_param])
-    @custom_user_authentication
+    @user_authentication
     def get(self, request):
         user = request.user
         current_time = timezone.now()
@@ -94,21 +91,21 @@ class TaskCreateView(GenericAPIView):
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(manual_parameters=[header_param])
-    @custom_user_authentication
+    @user_authentication
     def post(self, request, *args, **kwargs):
-        user = request.user
-        data = request.data.copy()
+        data = request.data
         tag_title = data.get('tag', None)
 
         if tag_title:
             tag, created = Tag.objects.get_or_create(title=tag_title, defaults={'color': self.generate_random_color()})
-            data['tag'] = tag.pk
+        else:
+            return Response({"error": "Tag is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save(user=user)
+        serializer.save(user=request.user, tag=tag)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def generate_random_color(self):

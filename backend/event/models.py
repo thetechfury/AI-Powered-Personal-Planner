@@ -46,7 +46,7 @@ class Task(models.Model):
     duration = models.PositiveIntegerField(default=0)
     recurring = models.CharField(max_length=250, null=True, blank=True)
     status = models.CharField(max_length=45, choices=STATUSES, default='pending')
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
     def __str__(self):
