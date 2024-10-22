@@ -57,19 +57,21 @@ class Task(models.Model):
 
     def save(self, *args, **kwargs):
         current_datetime = timezone.now()
-        if self.date < current_datetime.date():
-            raise ValidationError("The task date cannot be in the past.")
-        task_start_datetime = datetime.combine(self.date, self.start_time)
-        if self.date == current_datetime.date() and task_start_datetime < current_datetime:
+        if self.date < current_datetime:
+            raise ValidationError("The task date and time cannot be in the past.")
+        task_start_datetime = datetime.combine(self.date.date(), self.start_time)
+        task_start_datetime = timezone.make_aware(task_start_datetime, timezone.get_current_timezone())
+        if task_start_datetime < current_datetime:
             raise ValidationError("The start time cannot be in the past.")
-        if self.duration is not None and self.end_time is not None:
+        if self.duration and self.end_time:
             calculated_end_time = (
-                    datetime.combine(self.date, self.start_time) + timedelta(minutes=self.duration)).time()
+                    datetime.combine(self.date.date(), self.start_time) + timedelta(minutes=self.duration)).time()
             if calculated_end_time != self.end_time:
                 raise ValidationError("The provided end time does not match the start time and duration.")
-        if self.start_time and self.duration is not None:
-            start_datetime = timezone.datetime.combine(self.date, self.start_time)
+        if self.start_time and self.duration and not self.end_time:
+            start_datetime = datetime.combine(self.date.date(), self.start_time)
             self.end_time = (start_datetime + timedelta(minutes=self.duration)).time()
+
         super().save(*args, **kwargs)
 
 
