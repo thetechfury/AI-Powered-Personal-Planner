@@ -11,7 +11,7 @@ from django.utils import timezone
 from event.decorators import custom_user_authentication, user_authentication
 from event.models import CustomUser, Task, Chat, Tag
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, TagSerializer
-from event.utils import ChatPagination, TaskPagination, header_param, month_param
+from event.utils import ChatPagination, TaskPagination, header_param, month_param, page_param
 
 
 class CustomUserViewSet(GenericAPIView):
@@ -68,13 +68,13 @@ class TaskListViewSet(GenericAPIView):
     serializer_class = TaskSerializer
     pagination_class = TaskPagination
 
-    @swagger_auto_schema(manual_parameters=[header_param, month_param])
+    @swagger_auto_schema(manual_parameters=[header_param, month_param, page_param])
     @user_authentication
     def get(self, request):
         user = request.user
         current_time = timezone.now()
         month = request.query_params.get('month', current_time.month)
-        pagination_enabled = request.query_params.get('page', None)
+        pagination_param = request.query_params.get('page', None)
 
         tasks = Task.objects.filter(user=user).filter(
             Q(date__month=month) &
@@ -82,17 +82,14 @@ class TaskListViewSet(GenericAPIView):
              Q(date=current_time.date(), start_time__gt=current_time.time()))
         ).order_by('date', 'start_time')
 
-        if pagination_enabled:
+        if pagination_param:
             page = self.paginate_queryset(tasks)
             if page is not None:
                 serializer = self.get_paginated_response(TaskSerializer(page, many=True).data)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                serializer = TaskSerializer(tasks, many=True)
-                return Response({'results': serializer.data}, status=status.HTTP_200_OK)
-        else:
-            serializer = TaskSerializer(tasks, many=True)
-            return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+
+        serializer = TaskSerializer(tasks, many=True)
+        return Response({'results': serializer.data}, status=status.HTTP_200_OK)
 
 
 class TaskCreateView(GenericAPIView):

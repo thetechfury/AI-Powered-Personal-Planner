@@ -26,6 +26,14 @@ month_param = openapi.Parameter(
     type=openapi.TYPE_INTEGER
 )
 
+page_param = openapi.Parameter(
+    'page',
+    in_=openapi.IN_QUERY,
+    description="Page number for paginated results. Do not add page parameter or Leave blank to retrieve all tasks.",
+    type=openapi.TYPE_INTEGER,
+    required=False
+)
+
 schema_view = get_schema_view(
     openapi.Info(
         title="AI Planner APIs",
