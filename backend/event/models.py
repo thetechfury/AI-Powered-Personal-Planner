@@ -52,9 +52,6 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
-    class Meta:
-        ordering = ['-date', '-start_time']
-
     def save(self, *args, **kwargs):
         current_datetime = timezone.now()
         if self.date < current_datetime:

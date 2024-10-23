@@ -74,9 +74,9 @@ class TaskListViewSet(GenericAPIView):
         user = request.user
         current_time = timezone.now()
         tasks = Task.objects.filter(user=user).filter(
-            Q(date__gt=current_time.date()) |
+            Q(date__gt=current_time.date(), start_time__gt=current_time.time()) |
             Q(date=current_time.date(), start_time__gt=current_time.time())
-        )
+        ).order_by('date', 'start_time')
 
         page = self.paginate_queryset(tasks)
         if page is not None:
