@@ -63,15 +63,14 @@ class Task(models.Model):
         if task_start_datetime < current_datetime:
             raise ValidationError("The start time cannot be in the past.")
 
-        if self.duration and self.end_time:
-            calculated_end_time = (
-                    datetime.combine(self.date.date(), self.start_time) + timedelta(minutes=self.duration)).time()
-            if calculated_end_time != self.end_time:
-                raise ValidationError("The provided end time does not match the start time and duration.")
+        if self.start_time and self.duration:
+            if not self.end_time:
+                calculated_end_time = (task_start_datetime + timedelta(minutes=self.duration)).time()
+            else:
+                calculated_end_time = (
+                        datetime.combine(self.date.date(), self.start_time) + timedelta(minutes=self.duration)).time()
+            self.end_time = calculated_end_time
 
-        if self.start_time and self.duration and not self.end_time:
-            start_datetime = datetime.combine(self.date.date(), self.start_time)
-            self.end_time = (start_datetime + timedelta(minutes=self.duration)).time()
 
         task_end_datetime = datetime.combine(self.date.date(), self.end_time)
         task_end_datetime = timezone.make_aware(task_end_datetime, timezone.get_current_timezone())
@@ -87,7 +86,7 @@ class Task(models.Model):
             existing_task_end = datetime.combine(task.date.date(), task.end_time)
             existing_task_end = timezone.make_aware(existing_task_end, timezone.get_current_timezone())
 
-            if (task_start_datetime < existing_task_end and task_end_datetime > existing_task_start):
+            if task_start_datetime < existing_task_end and task_end_datetime > existing_task_start:
                 raise ValidationError("This task overlaps with another task scheduled at the same time.")
 
         super().save(*args, **kwargs)

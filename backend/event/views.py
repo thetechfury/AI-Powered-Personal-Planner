@@ -114,6 +114,23 @@ class TaskCreateView(GenericAPIView):
         return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
 
+class TaskUpdateView(GenericAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [AllowAny]
+
+    def patch(self, request, pk, *args, **kwargs):
+        task = Task.objects.filter(id=pk).first()
+        if not task:
+            return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(task, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class TagsListViewSet(GenericAPIView):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer

@@ -24,7 +24,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag', 'user']
+        fields = ['id', 'title', 'task_type', 'date', 'start_time', 'end_time', 'duration', 'recurring', 'tag', 'user']
         read_only_fields = ['tag', 'end_time', 'user']
         extra_kwargs = {
             'duration': {
@@ -33,7 +33,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'recurring': {
                 'help_text': 'Add comma seperated day names.'
             },
-            'tag':{
+            'tag': {
                 'help_text': 'Add tag name in string format.'
             }
         }
