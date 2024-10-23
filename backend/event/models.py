@@ -54,20 +54,41 @@ class Task(models.Model):
 
     def save(self, *args, **kwargs):
         current_datetime = timezone.now()
-        if self.date < current_datetime:
-            raise ValidationError("The task date and time cannot be in the past.")
         task_start_datetime = datetime.combine(self.date.date(), self.start_time)
         task_start_datetime = timezone.make_aware(task_start_datetime, timezone.get_current_timezone())
+
+        if self.date.date() < current_datetime.date():
+            raise ValidationError("The task date and time cannot be in the past.")
+
         if task_start_datetime < current_datetime:
             raise ValidationError("The start time cannot be in the past.")
+
         if self.duration and self.end_time:
             calculated_end_time = (
                     datetime.combine(self.date.date(), self.start_time) + timedelta(minutes=self.duration)).time()
             if calculated_end_time != self.end_time:
                 raise ValidationError("The provided end time does not match the start time and duration.")
+
         if self.start_time and self.duration and not self.end_time:
             start_datetime = datetime.combine(self.date.date(), self.start_time)
             self.end_time = (start_datetime + timedelta(minutes=self.duration)).time()
+
+        task_end_datetime = datetime.combine(self.date.date(), self.end_time)
+        task_end_datetime = timezone.make_aware(task_end_datetime, timezone.get_current_timezone())
+
+        overlapping_tasks = Task.objects.filter(
+            user=self.user,
+            date=self.date,
+        ).exclude(pk=self.pk)
+
+        for task in overlapping_tasks:
+            existing_task_start = datetime.combine(task.date.date(), task.start_time)
+            existing_task_start = timezone.make_aware(existing_task_start, timezone.get_current_timezone())
+            existing_task_end = datetime.combine(task.date.date(), task.end_time)
+            existing_task_end = timezone.make_aware(existing_task_end, timezone.get_current_timezone())
+
+            if (task_start_datetime < existing_task_end and task_end_datetime > existing_task_start):
+                raise ValidationError("This task overlaps with another task scheduled at the same time.")
 
         super().save(*args, **kwargs)
 
