@@ -12,7 +12,19 @@ class TaskPagination(PageNumberPagination):
     page_size = 3
 
 
-header_param = openapi.Parameter('Session-Id', openapi.IN_HEADER, description="Header param", type=openapi.IN_HEADER)
+header_param = openapi.Parameter(
+    'Session-Id',
+    openapi.IN_HEADER,
+    description="Session ID provided by the authentication system. Include this in the header for session tracking and user authentication.",
+    type=openapi.TYPE_STRING
+)
+
+month_param = openapi.Parameter(
+    'month',
+    openapi.IN_QUERY,
+    description="Filter tasks by month (1-12). Defaults to the current month if not provided.",
+    type=openapi.TYPE_INTEGER
+)
 
 schema_view = get_schema_view(
     openapi.Info(
