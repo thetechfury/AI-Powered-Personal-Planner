@@ -22,6 +22,13 @@ class Tag(models.Model):
     def save(self, *args, **kwargs):
         self.title = self.title.lower()
         self.color = self.color.lower()
+
+        if Tag.objects.filter(title=self.title).exclude(pk=self.pk).exists():
+            raise ValidationError(f"A tag with the title '{self.title}' already exists.")
+
+        if Tag.objects.filter(color=self.color).exclude(pk=self.pk).exists():
+            raise ValidationError(f"A tag with the color '{self.color}' already exists.")
+
         super().save(*args, **kwargs)
 
 

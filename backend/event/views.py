@@ -104,7 +104,7 @@ class TaskCreateView(GenericAPIView):
         tag_title = data.get('tag', None)
 
         if tag_title:
-            tag, created = Tag.objects.get_or_create(title=tag_title, defaults={'color': self.generate_random_color()})
+            tag, created = Tag.objects.get_or_create(title=tag_title.lower(), defaults={'color': self.generate_random_color()})
         else:
             return Response({"error": "Tag is required."}, status=status.HTTP_400_BAD_REQUEST)
 
