@@ -1,5 +1,3 @@
-import random
-
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import GenericAPIView
@@ -11,7 +9,8 @@ from django.utils import timezone
 from event.decorators import custom_user_authentication, user_authentication
 from event.models import CustomUser, Task, Chat, Tag
 from event.serializers import CustomUserSerializer, TaskSerializer, ChatSerializer, TagSerializer
-from event.utils import ChatPagination, TaskPagination, header_param, month_param, page_param
+from event.utils import ChatPagination, TaskPagination, header_param, month_param, page_param, generate_random_color, \
+    get_tag_item
 
 
 class CustomUserViewSet(GenericAPIView):
@@ -102,11 +101,7 @@ class TaskCreateView(GenericAPIView):
     def post(self, request, *args, **kwargs):
         data = request.data
         tag_title = data.get('tag', None)
-
-        if tag_title:
-            tag, created = Tag.objects.get_or_create(title=tag_title.lower(), defaults={'color': self.generate_random_color()})
-        else:
-            return Response({"error": "Tag is required."}, status=status.HTTP_400_BAD_REQUEST)
+        tag = get_tag_item(tag_title)
 
         serializer = self.get_serializer(data=data)
         if not serializer.is_valid():
@@ -114,9 +109,6 @@ class TaskCreateView(GenericAPIView):
 
         serializer.save(user=request.user, tag=tag)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def generate_random_color(self):
-        return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
 
 class TaskUpdateView(GenericAPIView):
@@ -128,10 +120,15 @@ class TaskUpdateView(GenericAPIView):
         task = Task.objects.filter(id=pk).first()
         if not task:
             return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(task, data=request.data, partial=True)
+
+        data = request.data
+        tag_title = data.get('tag', None)
+        tag = get_tag_item(tag_title)
+
+        serializer = self.get_serializer(task, data=data, partial=True)
 
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(tag=tag)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
