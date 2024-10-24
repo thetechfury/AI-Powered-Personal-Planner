@@ -76,7 +76,7 @@ class TaskListViewSet(GenericAPIView):
         pagination_param = request.query_params.get('page', None)
 
         tasks = Task.objects.filter(user=user).filter(
-            Q(date__month=month) &
+            Q(date__month=month, status='pending') &
             (Q(date__gt=current_time.date()) |
              Q(date=current_time.date(), start_time__gt=current_time.time()))
         ).order_by('date', 'start_time')
@@ -130,6 +130,23 @@ class TaskUpdateView(GenericAPIView):
         if serializer.is_valid():
             serializer.save(tag=tag)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TaskCancelView(GenericAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [AllowAny]
+
+    def patch(self, request, pk, *args, **kwargs):
+        task = Task.objects.filter(id=pk).first()
+        if not task:
+            return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
+        data = {'status': 'canceled'}
+        serializer = self.get_serializer(task, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(f'{task.title} is removed successfully.', status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

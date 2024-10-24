@@ -85,6 +85,7 @@ class Task(models.Model):
         overlapping_tasks = Task.objects.filter(
             user=self.user,
             date=self.date,
+            status='pending',
         ).exclude(pk=self.pk)
 
         for task in overlapping_tasks:
