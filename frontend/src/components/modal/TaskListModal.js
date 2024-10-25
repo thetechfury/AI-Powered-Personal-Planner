@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {Box, Button, IconButton, List, ListItem, ListItemText, Modal, Typography} from "@mui/material";
 import {Close, Edit,} from '@mui/icons-material';
 import AddNewTaskModal from "./AddNewTaskModal";
-import { createSvgIcon } from '@mui/material/utils';
+import {createSvgIcon} from '@mui/material/utils';
 // Styles for the modal
 const modalStyle = {
     position: 'absolute',
@@ -11,14 +11,13 @@ const modalStyle = {
     transform: 'translate(-50%, -50%)',
     width: 400,
     bgcolor: '#1f2937',
-    // border: '1px solid #fff',
     boxShadow: 24,
     p: 4,
 };
 
 // Task item style
 const taskItemStyle = {
-    border: '1px solid #fff',
+    border: '1px solid gray',
     borderRadius: '8px',
     padding: '8px',
     color: '#fff',
@@ -33,33 +32,35 @@ const formatDate = (dateStr) => {
     return new Intl.DateTimeFormat('en-GB', options).format(date);
 };
 const PlusIcon = createSvgIcon(
-  // credit: plus icon from https://heroicons.com
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-  </svg>,
-  'Plus',
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+    >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+    </svg>,
+    'Plus',
 );
 
-const AddTaskModal = ({open, onClose, selectedDate, onSave,tasks}) => {
+const TaskListModal = ({open, onClose, selectedDate, tasks, setTasks}) => {
     const [isModalOpen, setModalOpen] = useState(false);
+    const [dateSelected, setDateSelected] = useState(selectedDate);
 
-    // Filter tasks by selected date
-    const filteredTasks = tasks.filter(task => new Date(task.date).toDateString() === new Date(selectedDate).toDateString());
-    // Handle Edit Task (you can expand this functionality)
+    const AddnewTask = () => {
+        setDateSelected(selectedDate)
+        setModalOpen(true);
+    }
+
+    const filteredTasks = tasks.filter(
+        task => new Date(task.date).toDateString() === new Date(selectedDate).toDateString());
     const handleEditTask = (id) => {
         alert(`Edit task with id: ${id}`);
     };
-
-    // Handle Delete Task
-    const handleDeleteTask = (id) => {
-        onSave(tasks.filter(task => task.id !== id));
-    };
+    // const handleDeleteTask = (id) => {
+    //     onSave(tasks.filter(task => task.id !== id));
+    // };
 
     return (
         <>
@@ -71,10 +72,10 @@ const AddTaskModal = ({open, onClose, selectedDate, onSave,tasks}) => {
             >
                 <Box sx={modalStyle}>
                     <Box display="flex" justifyContent="space-between">
-                        <Typography id="task-list-modal-title" variant="h6" component="h2" className='text-white'>
+                        <Typography id="task-list-modal-title" variant="h6" component="h2" className='text-[#22d3ee]'>
                             {formatDate(selectedDate)}
                         </Typography>
-                        <Button  onClick={() => setModalOpen(true)} sx={{mr: -3}}>
+                        <Button onClick={AddnewTask} sx={{mr: -3}}>
                             <PlusIcon className='text-white'/>
                         </Button>
 
@@ -83,13 +84,14 @@ const AddTaskModal = ({open, onClose, selectedDate, onSave,tasks}) => {
                     {/* Task List */}
                     <List sx={{mt: 2}}>
                         {filteredTasks.length === 0 ? (
-                            <Typography className='text-white'>No tasks for this date.</Typography>
+                            <Typography className='text-white !text-xs font-normal tracking-normal'>No tasks for this
+                                date.</Typography>
                         ) : (
                             filteredTasks.map((task) => (
                                 <ListItem key={task.id} sx={taskItemStyle}>
                                     <ListItemText
                                         primary={task.title}
-                                        secondary={`${task.startTime} - ${task.endTime}`}
+                                        secondary={`${task.start_time} - ${task.end_time}`}
                                         sx={{
                                             ml: 2,
                                             '& .MuiTypography-root': {
@@ -98,13 +100,16 @@ const AddTaskModal = ({open, onClose, selectedDate, onSave,tasks}) => {
                                         }}
                                     />
                                     <Box display="flex" alignItems="center">
-                                        <IconButton onClick={() => handleDeleteTask(task.id)} size="small"
-                                                    sx={{position: 'absolute', top: '-14px', right: '-10px'}}>
-                                            <Close fontSize="small" className='text-white'/>
+                                        <IconButton
+                                            // onClick={() => handleDeleteTask(task.id)}
+                                            size="small"
+                                            sx={{position: 'absolute', top: '-8px', right: '-10px'}}>
+                                            <Close fontSize="small"
+                                                   className='text-white border border-1 rounded-full !bg-red-500'/>
                                         </IconButton>
                                         <IconButton onClick={() => handleEditTask(task.id)} size="small">
                                             <Edit fontSize="small"
-                                                  className='text-white border border-1 !w-12 p-2 !h-12'/>
+                                                  className='text-white'/>
                                         </IconButton>
 
                                     </Box>
@@ -122,10 +127,11 @@ const AddTaskModal = ({open, onClose, selectedDate, onSave,tasks}) => {
             <AddNewTaskModal
                 open={isModalOpen}
                 onClose={() => setModalOpen(false)}
-                onSave={onSave}
+                setTaskHistory={newTask => setTasks(prevTasks => [newTask, ...prevTasks])}
+                dateSelected={dateSelected}
             />
         </>
     );
 };
 
-export default AddTaskModal;
+export default TaskListModal;

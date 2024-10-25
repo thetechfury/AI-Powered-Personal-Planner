@@ -1,7 +1,22 @@
-import React, {useState} from "react";
-import {Box, Button, Checkbox, FormControlLabel, MenuItem, Modal, TextField, Typography} from "@mui/material";
+import React, {useEffect, useState} from "react";
+import {Box, Button, MenuItem, Modal, TextField, Typography} from "@mui/material";
+import {ErrorMessage, Field, Form, Formik} from "formik";
+import * as Yup from "yup";
+import CreateTaskApi from "../api/CreateTaskApi";
+import dayjs from "dayjs";
+import TaskHistoryApi from "../api/TaskHistoryApi";
 
-// Styles for the modal
+// Validation schema using Yup
+const validationSchema = Yup.object({
+    title: Yup.string().min(1).max(50).required(),
+    date: Yup.string().required(),
+    start_time: Yup.string().required(),
+    duration: Yup.number().min(0).required(),
+    task_type: Yup.string().required(),
+    tag: Yup.string().required(),
+});
+
+// Modal style definitions
 const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -13,214 +28,209 @@ const modalStyle = {
     boxShadow: 24,
     p: 4,
 };
+
+const buttonStyle = (isSelected) => ({
+    minWidth: 35,
+    height: 35,
+    border: '1px solid gray',
+    borderRadius: '100px',
+    margin: '6px',
+    fontSize: '0.75rem',
+    color: '#fff',
+    backgroundColor: isSelected ? '#22d3ee' : 'transparent',
+    '&:hover': {
+        backgroundColor: isSelected ? '#22d3ee' : '#4b5563',
+    },
+});
+
 const textFieldStyles = {
+    color: 'white',
     bgcolor: '#1f2937',
+    '& .MuiFormControlLabel-label': {
+        fontSize: '0.75rem',
+    },
     '& .MuiInputBase-input': {
         color: 'white',
+        fontSize: '0.75rem',
     },
     '& .MuiInputLabel-root': {
         color: 'white',
     },
     '& .MuiOutlinedInput-root': {
         border: '1px solid gray',
+        height: '60px',
         '&:hover fieldset': {
             borderColor: 'white',
         },
         '&.Mui-focused fieldset': {
             borderColor: 'white',
         },
-    },
-    '& .MuiInput-underline:before': {
-        borderColor: 'white',
-    },
-    '& .MuiInput-underline:after': {
-        borderColor: 'white',
-    },
-    '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
-        borderColor: 'white',
+        '&.Mui-focused': {
+            border: 'none',
+        },
     },
     '& .MuiSvgIcon-root': {
         color: 'white',
     },
-    '& .Mui-focused': {
-        '--tw-ring-color': 'rgba(255, 255, 255, 0.5)',
-    },
 };
-
-const taskTypes = ["Event", "Reminder", "Flexible"];
-
+const taskTypes = ["event", "reminder", "flexible"];
 const daysOfWeek = [
-    {name: 'Monday', value: 'Mon'},
-    {name: 'Tuesday', value: 'Tue'},
-    {name: 'Wednesday', value: 'Wed'},
-    {name: 'Thursday', value: 'Thu'},
-    {name: 'Friday', value: 'Fri'},
-    {name: 'Saturday', value: 'Sat'},
-    {name: 'Sunday', value: 'Sun'}
+    {name: 'S', value: 'Sun'},
+    {name: 'M', value: 'Mon'},
+    {name: 'T', value: 'Tue'},
+    {name: 'W', value: 'Wed'},
+    {name: 'T', value: 'Thu'},
+    {name: 'F', value: 'Fri'},
+    {name: 'S', value: 'Sat'},
 ];
-const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    const options = {day: '2-digit', month: 'short', year: 'numeric'};
-    return new Intl.DateTimeFormat('en-GB', options).format(date);
-};
-
-const AddTaskModal = ({open, onClose, onSave}) => {
-    const [title, setTitle] = useState("");
-    const [taskType, setTaskType] = useState("");
-    const [date, setDate] = useState("");
-    const [startTime, setStartTime] = useState("");
-    const [hours, setHours] = useState("");
-    const [recurringDays, setRecurringDays] = useState([]);
-    const [tags, setTags] = useState("");
-
-    // Toggle a day selection
-    const handleRecurringChange = (day) => {
-        if (recurringDays.includes(day)) {
-            setRecurringDays(recurringDays.filter(d => d !== day));
-        } else {
-            setRecurringDays([...recurringDays, day]);
-        }
-    };
-    const formatTimeWithAmPm = (timeStr) => {
-        const [hours, minutes] = timeStr.split(':');
-        let hoursInt = parseInt(hours);
-        const period = hoursInt >= 12 ? 'PM' : 'AM';
-        if (hoursInt > 12) hoursInt -= 12;
-        if (hoursInt === 0) hoursInt = 12;
-        return `${hoursInt}:${minutes} ${period}`;
-    };
-    const handleSubmit = () => {
-        const formattedDate = date ? formatDate(date) : '';
-        const formattedStartTime = formatTimeWithAmPm(startTime);
-        const newTask = {
-            title,
-            task_type: taskType,
-            date: formattedDate,
-            startTime: formattedStartTime,
-            hours: hours || null,
-            recurring: recurringDays.length > 0 ? recurringDays.join(', ') : 'None',
-            tags,
-        };
-        onSave(newTask);
-        // Reset fields and close modal
-        setTitle("");
-        setTaskType("");
-        setDate("");
-        setStartTime("");
-        setHours("");
-        setRecurringDays([]);
-        setTags("");
-        onClose();
-    };
-
+const CustomErrorMessage = ({name}) => {
     return (
-        <Modal
-            open={open}
-            onClose={onClose}
-            aria-labelledby="add-task-modal-title"
-            aria-describedby="add-task-modal-description"
-        >
+        <ErrorMessage
+            name={name}
+            component="div"
+            style={{color: 'red', marginTop: '4px', fontSize: '0.75rem'}}
+        />
+    );
+};
+const AddTaskModal = ({open, onClose, dateSelected, setTaskHistory}) => {
+    const {createTask, response, loading, error} = CreateTaskApi();
+    const {fetchInitialTaskHistory, fetchTaskHistory} = TaskHistoryApi();
+    const [recurringDays, setRecurringDays] = useState([]);
+    const dateSelectedDayjs = dayjs(dateSelected);
+
+    const handleRecurringChange = (day) => {
+        setRecurringDays(prev =>
+            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+        );
+    };
+
+    useEffect(() => {
+        if (open) {
+            setRecurringDays([]);
+        }
+    }, [open]);
+
+    // Define initial values outside the JSX
+    const initialValues = {
+        title: '',
+        date: dateSelectedDayjs.format('YYYY-MM-DD'),
+        start_time: '',
+        duration: '',
+        task_type: '',
+        tag: '',
+    };
+
+    // Define handleSubmit function
+    const handleSubmit = async (values, {setSubmitting, resetForm}) => {
+        const newTask = {
+            ...values,
+            recurring: recurringDays.length > 0 ? recurringDays.join(', ') : 'None',
+        };
+        await createTask(newTask);
+        if (!error) {
+            resetForm();
+            onClose();
+        }
+        setSubmitting(false);
+    };
+    useEffect(() => {
+        if (Object.keys(response).length > 0) {
+            setTaskHistory(response);
+            fetchInitialTaskHistory();
+            fetchTaskHistory();
+        }
+    }, [response]);
+    return (
+        <Modal open={open} onClose={onClose}>
             <Box sx={modalStyle}>
-                <Typography id="add-task-modal-title" variant="h6" component="h2" className='text-white'>
+                <Typography id="add-task-modal-title" variant="h6" component="h2" className='text-[#22d3ee]'>
                     Add New Task
                 </Typography>
-                <TextField
-                    label="Title"
-                    fullWidth
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    inputProps={{maxLength: 50, minLength: 1}}
-                    margin="normal"
-                    sx={textFieldStyles}
-                />
-
-                <Box display="flex" justifyContent="space-between" gap="16px">
-                    <TextField
-                        label="Date"
-                        type="date"
-                        fullWidth
-                        required
-                        InputLabelProps={{shrink: true}}
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        margin="normal"
-                        sx={textFieldStyles}
-                    />
-                    <TextField
-                        label="Start Time"
-                        type="time"
-                        fullWidth
-                        required
-                        InputLabelProps={{shrink: true}}
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        margin="normal"
-                        sx={textFieldStyles}
-                    />
-                </Box>
-                <TextField
-                    label="Duration in minuts"
-                    type="number"
-                    fullWidth
-                    InputProps={{inputProps: {min: 0, max: 9223372036854776000}}}
-                    value={hours}
-                    onChange={(e) => setHours(e.target.value)}
-                    margin="normal"
-                    sx={textFieldStyles}
-                />
-
-                <Typography variant="body1" component="p" sx={{mt: 2}} className='text-white'>
-                    Recurring Days
-                </Typography>
-                <Box display="flex" flexDirection="row" flexWrap="wrap" mt={1}>
-                    {daysOfWeek.map((day) => (
-                        <FormControlLabel
-                            key={day.value}
-                            control={
-                                <Checkbox
-                                    checked={recurringDays.includes(day.value)}
-                                    onChange={() => handleRecurringChange(day.value)}
-                                    sx={{color: 'white'}}
-                                />
-                            }
-                            label={day.name}
-                            className='text-white'
-                        />
-                    ))}
-                </Box>
-                <Box display="flex" justifyContent="space-between" gap="16px">
-                    <TextField
-                        label="Task Type"
-                        select
-                        fullWidth
-                        required
-                        value={taskType}
-                        onChange={(e) => setTaskType(e.target.value)}
-                        margin="normal"
-                        sx={textFieldStyles}
-                    >
-                        {taskTypes.map((type) => (
-                            <MenuItem key={type} value={type}>
-                                {type}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                    <TextField
-                        label="Tags"
-                        type="text"
-                        fullWidth
-                        required
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                        margin="normal"
-                        sx={textFieldStyles}
-                    />
-                </Box>
-                <Box mt={2} display="flex" justifyContent="flex-end">
-                    <Button onClick={onClose} sx={{mr: 1}}>Cancel</Button>
-                    <Button variant="contained" onClick={handleSubmit}>Save</Button>
-                </Box>
+                <Formik
+                    initialValues={initialValues} // Use the separated initialValues
+                    validationSchema={validationSchema}
+                    onSubmit={handleSubmit} // Use the separated handleSubmit function
+                >
+                    {({isSubmitting, handleChange, values}) => (
+                        <Form>
+                            <Field name="title" as={TextField} label="Title" fullWidth required margin="normal"
+                                   sx={textFieldStyles}/>
+                            <CustomErrorMessage name="title"/>
+                            <Box display="flex" justifyContent="space-between" gap="16px">
+                                <Box className='!w-full'>
+                                    <Field name="date" as={TextField} label="Date" type="date" fullWidth required
+                                           margin="normal" sx={textFieldStyles}/>
+                                    <CustomErrorMessage name="date"/>
+                                </Box>
+                                <Box className='!w-full'>
+                                    <Field name="start_time" as={TextField} label="Start Time" type="time" fullWidth
+                                           required margin="normal" sx={textFieldStyles}/>
+                                    <CustomErrorMessage name="start_time"/>
+                                </Box>
+                            </Box>
+                            <Field name="duration" as={TextField} label="Duration in minutes" fullWidth required
+                                   margin="normal" sx={textFieldStyles}/>
+                            <CustomErrorMessage name="duration"/>
+                            <Typography variant="body1" component="p" sx={{mt: 2}} className='text-white'>
+                                Recurring Days
+                            </Typography>
+                            <Box display="flex" flexDirection="row" flexWrap="wrap" mt={1}>
+                                {daysOfWeek.map((day) => (
+                                    <Button
+                                        key={day.value}
+                                        sx={buttonStyle(recurringDays.includes(day.value))}
+                                        onClick={() => handleRecurringChange(day.value)}
+                                    >
+                                        {day.name}
+                                    </Button>
+                                ))}
+                            </Box>
+                            <Box display="flex" justifyContent="space-between" gap="16px">
+                                <Box className='!w-full'>
+                                    <Field
+                                        name="task_type"
+                                        as={TextField}
+                                        label="Task Type"
+                                        select
+                                        fullWidth
+                                        required
+                                        margin="normal"
+                                        sx={textFieldStyles}
+                                        onChange={handleChange}
+                                        value={values.taskType}
+                                    >
+                                        {taskTypes.map((type) => (
+                                            <MenuItem key={type} value={type}
+                                                      sx={{background: '#1f2937', color: 'white'}}>
+                                                {type}
+                                            </MenuItem>
+                                        ))}
+                                    </Field>
+                                    <CustomErrorMessage name="task_type"/>
+                                </Box>
+                                <Box className='!w-full'>
+                                    <Field
+                                        name="tag"
+                                        as={TextField}
+                                        label="Tags"
+                                        fullWidth
+                                        required
+                                        margin="normal"
+                                        sx={textFieldStyles}
+                                        onChange={handleChange}
+                                        value={values.tags}
+                                    />
+                                    <CustomErrorMessage name="tag"/>
+                                </Box>
+                            </Box>
+                            <Box display="flex" justifyContent="flex-end">
+                                <Button onClick={onClose}>Cancel</Button>
+                                <Button type="submit"
+                                        disabled={isSubmitting || loading}>{isSubmitting || loading ? 'Saving...' : 'Save'}</Button>
+                            </Box>
+                        </Form>
+                    )}
+                </Formik>
             </Box>
         </Modal>
     );
